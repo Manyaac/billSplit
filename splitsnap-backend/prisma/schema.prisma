@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum SplitMode {
+  EQUAL
+  ITEMIZED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+
+  bills   Bill[]
+  friends Friend[]
+}
+
+model Friend {
+  id      String @id @default(uuid())
+  name    String
+  balanceOwed Float  @default(0)
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id])
+
+  splits     Split[]
+  billItems  BillItem[] @relation("ItemAssignees")
+}
+
+model Bill {
+  id          String    @id @default(uuid())
+  title       String?
+  imageUrl    String?
+  totalAmount Float
+  splitMode   SplitMode
+  createdAt   DateTime  @default(now())
+
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id])
+
+  items  BillItem[]
+  splits Split[]
+}
+
+model BillItem {
+  id     String @id @default(uuid())
+  name   String
+  price  Float
+  quantity Int    @default(1)
+
+
+  billId String
+  bill   Bill   @relation(fields: [billId], references: [id])
+
+  assignedTo Friend[] @relation("ItemAssignees")
+}
+
+model Split {
+  id          String @id @default(uuid())
+  amountOwed  Float
+
+  billId   String
+  bill     Bill   @relation(fields: [billId], references: [id])
+
+  friendId String
+  friend   Friend @relation(fields: [friendId], references: [id])
+}

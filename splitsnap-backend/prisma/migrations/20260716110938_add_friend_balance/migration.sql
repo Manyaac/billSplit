@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Friend" ADD COLUMN     "balanceOwed" DOUBLE PRECISION NOT NULL DEFAULT 0;
