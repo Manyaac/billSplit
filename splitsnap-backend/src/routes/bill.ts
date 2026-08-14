@@ -148,7 +148,7 @@ router.post("/:id/split", requireAuth, validate(splitBillSchema), async (req: Au
     // Save Split rows + bump each friend's running balance, all in one transaction
     // Save Split rows + bump each friend's running balance, all in one transaction
     const result = await prisma.$transaction(async (tx) => {
-      const splits = [];
+      const splits: any[] = [];
       for (const [friendId, amount] of Object.entries(owedMap)) {
         const split = await tx.split.create({
           data: { billId: bill.id, friendId, amountOwed: amount },
