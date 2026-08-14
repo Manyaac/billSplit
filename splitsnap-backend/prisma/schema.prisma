@@ -26,6 +26,7 @@ model User {
 model Friend {
   id      String @id @default(uuid())
   name    String
+  email       String?
   balanceOwed Float  @default(0)
   ownerId String
   owner   User   @relation(fields: [ownerId], references: [id])
@@ -40,6 +41,7 @@ model Bill {
   imageUrl    String?
   totalAmount Float
   splitMode   SplitMode
+  equalSplitCount Int?
   createdAt   DateTime  @default(now())
 
   ownerId String
@@ -58,13 +60,15 @@ model BillItem {
 
   billId String
   bill   Bill   @relation(fields: [billId], references: [id])
-
+  
   assignedTo Friend[] @relation("ItemAssignees")
 }
 
 model Split {
   id          String @id @default(uuid())
   amountOwed  Float
+  paid       Boolean   @default(false)
+  paidAt     DateTime?
 
   billId   String
   bill     Bill   @relation(fields: [billId], references: [id])

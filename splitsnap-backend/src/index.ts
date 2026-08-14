@@ -9,8 +9,7 @@ import parseRoutes from "./routes/parse.js";
 import billRoutes from "./routes/bill.js";
 import friendRoutes from "./routes/friend.js";
 import billItemRoutes from "./routes/billItem.js";
-
-
+import splitRoutes from "./routes/split.js";
 
 
 dotenv.config();
@@ -23,7 +22,7 @@ app.use("/parse", parseRoutes);
 app.use("/bills", billRoutes);
 app.use("/friends", friendRoutes);
 app.use("/items", billItemRoutes);
-
+app.use("/splits", splitRoutes);
 
 
 

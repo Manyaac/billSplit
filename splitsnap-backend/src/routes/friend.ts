@@ -2,21 +2,31 @@ import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { requireAuth } from "../middleware/auth.js";
 import type { AuthRequest } from "../middleware/auth.js";
+import { validate } from "../middleware/validate.js";
+import { createFriendSchema, updateFriendSchema, updateBalanceSchema } from "../schemas/friend.schema.js";
 
 const router = Router();
 
 // Add a friend
-router.post("/", requireAuth, async (req: AuthRequest, res) => {
-  const { name } = req.body;
-
-  if (!name || typeof name !== "string") {
-    return res.status(400).json({ error: "name is required" });
-  }
+router.post("/", requireAuth, validate(createFriendSchema), async (req: AuthRequest, res) => {
+  const { name, email } = req.body;
 
   try {
+    const existing = await prisma.friend.findFirst({
+      where: {
+        ownerId: req.userId!,
+        name: { equals: name, mode: "insensitive" },
+      },
+    });
+
+    if (existing) {
+      return res.status(409).json({ error: `${name} is already in your friends list` });
+    }
+
     const friend = await prisma.friend.create({
       data: {
         name,
+        email: email || null,
         ownerId: req.userId!,
       },
     });
@@ -64,16 +74,12 @@ router.delete("/:id", requireAuth, async (req: AuthRequest, res) => {
 });
 
 // Manually adjust a friend's balance (e.g. correcting for a cash payback)
-router.patch("/:id/balance", requireAuth, async (req: AuthRequest, res) => {
+router.patch("/:id/balance", requireAuth, validate(updateBalanceSchema), async (req: AuthRequest, res) => {
   const friendId = req.params.id;
   const { balanceOwed } = req.body;
 
   if (!friendId || typeof friendId !== "string") {
     return res.status(400).json({ error: "Invalid friend id" });
-  }
-
-  if (typeof balanceOwed !== "number") {
-    return res.status(400).json({ error: "balanceOwed must be a number" });
   }
 
   try {
@@ -92,6 +98,37 @@ router.patch("/:id/balance", requireAuth, async (req: AuthRequest, res) => {
   } catch (err) {
     console.error("Update balance error:", err);
     res.status(500).json({ error: "Failed to update balance" });
+  }
+});
+
+// Update a friend's name/email
+router.patch("/:id", requireAuth, validate(updateFriendSchema), async (req: AuthRequest, res) => {
+  const friendId = req.params.id;
+  const { name, email } = req.body;
+
+  if (!friendId || typeof friendId !== "string") {
+    return res.status(400).json({ error: "Invalid friend id" });
+  }
+
+  try {
+    const friend = await prisma.friend.findUnique({ where: { id: friendId } });
+
+    if (!friend || friend.ownerId !== req.userId) {
+      return res.status(404).json({ error: "Friend not found" });
+    }
+
+    const updated = await prisma.friend.update({
+      where: { id: friendId },
+      data: {
+        ...(name !== undefined && { name }),
+        ...(email !== undefined && { email }),
+      },
+    });
+
+    res.status(200).json(updated);
+  } catch (err) {
+    console.error("Update friend error:", err);
+    res.status(500).json({ error: "Failed to update friend" });
   }
 });
 

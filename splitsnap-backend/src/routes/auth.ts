@@ -3,16 +3,14 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { prisma } from "../lib/prisma.js";
 import { resend } from "../lib/resend.js";
+import { validate } from "../middleware/validate.js";
+import { signupSchema, loginSchema } from "../schemas/auth.schema.js";
 
 const router = Router();
 
-router.post("/signup", async (req, res) => {
+router.post("/signup", validate(signupSchema), async (req, res) => {
   try {
     const { username, email, password } = req.body;
-
-    if (!username || !email || !password) {
-      return res.status(400).json({ error: "Missing required fields" });
-    }
 
     const existing = await prisma.user.findFirst({
       where: { OR: [{ email }, { username }] },
@@ -53,13 +51,9 @@ router.post("/signup", async (req, res) => {
 });
 
 
-router.post("/login", async (req, res) => {
+router.post("/login", validate(loginSchema), async (req, res) => {
   try {
     const { emailOrUsername, password } = req.body;
-
-    if (!emailOrUsername || !password) {
-      return res.status(400).json({ error: "Missing required fields" });
-    }
 
     const user = await prisma.user.findFirst({
       where: {
