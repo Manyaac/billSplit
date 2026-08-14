@@ -423,8 +423,8 @@ export default function BillDetail() {
               }}
               className="font-body px-3 py-1.5 rounded-lg border border-moss/30 bg-cream text-sm w-full sm:w-24"
             />
-            <p className="font-mono text-xs text-ink/40">
-              {peopleCount > 0 ? "click below to split" : "enter how many people are splitting"}
+            <p className="font-mono text-xs text-coral">
+              {peopleCount > 0 ? `₹${(bill.totalAmount / peopleCount).toFixed(2)} each` : "enter a number to see the split"}
             </p>
             {billFriends.length > 0 && (
               <>
